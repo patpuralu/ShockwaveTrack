@@ -1,5 +1,7 @@
 #!/usr/bin/python
-# << CODE BY HUNX04
+# << CODE BY patpuralu
+# Original base by HUNX04
+# Full rewrite, improvements & new modules by patpuralu
 
 import json
 import requests
