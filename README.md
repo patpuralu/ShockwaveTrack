@@ -1,49 +1,51 @@
 # ShockwaveTR
 
-ShockwaveTR es una herramienta **OSINT de terminal** escrita en Python con 5 módulos independientes: rastreo de IPs, análisis de números de teléfono, búsqueda de usuarios en redes sociales, lookup de dominios y visualización completa de tu red local. Todo desde la línea de comandos, con historial automático y soporte para daltonismo.
+ShockwaveTR is a **terminal-based OSINT tool** written in Python
+
+<img width="647" height="331" alt="image" src="https://github.com/user-attachments/assets/c23829c4-42ba-4790-b43d-f03fcc49be06" />
 
 ---
 
-## Módulos
+## Modules
 
 ### 1. IP Tracker
-Geolocaliza cualquier IP pública y extrae toda la información disponible:
+Geolocates any public IP and extracts all available information:
 
-- País, ciudad, región y código postal
-- Coordenadas + enlace directo a Google Maps
-- ISP, ASN y organización
-- Timezone, hora local en tiempo real y offset UTC
-- Código de llamada, capital, bandera emoji y países fronterizos
+- Country, city, region and postal code
+- Coordinates + direct Google Maps link
+- ISP, ASN and organization
+- Timezone, real-time local time and UTC offset
+- Calling code, capital, flag emoji and bordering countries
 
 ---
 
 ### 2. Show Your IP
-Muestra tu IP pública y el detalle completo de tu red local:
+Displays your public IP and full local network details:
 
-- IP pública via `ipify.org`
-- IP local, máscara de subred, CIDR y dirección de broadcast
-- Rango de hosts usables y total disponible
-- Gateway por defecto
-- Subredes `/24` si la red es más grande
+- Public IP via `ipify.org`
+- Local IP, subnet mask, CIDR and broadcast address
+- Usable host range and total available hosts
+- Default gateway
+- `/24` subnets if the network is larger
 
 ---
 
 ### 3. Phone Number Tracker
-Analiza un número de teléfono con formato internacional:
+Analyzes a phone number in international format:
 
-- Localización y código de región
-- Operadora (carrier)
-- Timezone del número
-- Formatos: internacional, E.164, marcación móvil
-- Validez real del número (no solo formato)
-- Tipo: Móvil, Fijo, VoIP, Gratuito, Tarificación especial
+- Location and region code
+- Carrier
+- Number timezone
+- Formats: international, E.164, mobile dialing
+- Real number validity (not just format check)
+- Type: Mobile, Landline, VoIP, Toll-free, Premium rate
 
 ---
 
 ### 4. Username Tracker
-Busca un username en **22 plataformas en paralelo**:
+Searches a username across **22 platforms in parallel**:
 
-| Plataforma | Plataforma | Plataforma |
+| Platform | Platform | Platform |
 |---|---|---|
 | GitHub | Instagram | TikTok |
 | YouTube | Twitch | SoundCloud |
@@ -54,113 +56,89 @@ Busca un username en **22 plataformas en paralelo**:
 | Product Hunt | Quora | Telegram |
 | Snapchat | | |
 
-Soporta búsqueda de **1 usuario o varios a la vez** (separados por comas).
-Guarda historial con los resultados de cada búsqueda.
+Supports searching **1 user or multiple at once** (comma-separated).
+Saves history with the results of each search.
 
 ---
 
 ### 5. Domain Lookup
-Obtiene información completa de un dominio:
+Gets full information about a domain:
 
-- Resolución DNS → IP
-- País, ciudad e ISP del servidor
-- Registrador y fecha de creación (via whoisxmlapi)
-- Registros DNS con `nslookup`
-
----
-
-## Extras
-
-- **Historial automático** → cada búsqueda se guarda en `results/history_<tipo>_<fecha>.json`
-- **Soporte daltonismo** → 4 modos de color: normal, protanopia, deuteranopia, tritanopia
-- **Ejecución paralela** → el username tracker usa `ThreadPoolExecutor` para escanear las 22 plataformas a la vez
-- **Banner ASCII** de Shockwave en el menú principal
+- DNS resolution → IP
+- Country, city and ISP of the server
+- Registrar and creation date (via whoisxmlapi)
+- DNS records via `nslookup`
 
 ---
 
-## Instalación
+## Extra features
 
-**Requisitos:**
-- Python 3.9+ (Python 3.8 funciona con `pytz` instalado)
+- **Automatic history** → every search is saved to `results/history_<type>_<date>.json`
+- **Color-blindness support** → 4 color modes: normal, protanopia, deuteranopia, tritanopia
+- **Parallel execution** → username tracker uses `ThreadPoolExecutor` to scan all 22 platforms simultaneously
+- **ASCII banner** of Shockwave in the main menu
 
-**Dependencias:**
-```bash
-pip install requests phonenumbers
+---
+
+## Installation
+
+**Requirements:**
+- Python 3.9+ (Python 3.8 works with `pytz` installed)
+
+**Instalation on Linux (deb)**
+```
+sudo apt-get install git
+sudo apt-get install python3
 ```
 
-**Opcional** (mejor detección de interfaces de red):
+**Instalation on Termux**
+```
+pkg install git
+pkg install python3
+```
+
+**Usage Tool**
+```bash
+git clone https://github.com/patpuralu/ShockwaveTrack.git
+cd ShockwaveTR.py
+pip install requests phonenumbers
+o
+pip3 install -r requirements.txt
+```
+
+**Optional** (better network interface detection):
 ```bash
 pip install netifaces pytz
 ```
 
 ---
 
-## Uso
+## Usage
 
 ```bash
 python ShockwaveTR.py
 ```
 
-**Menú principal:**
-```
-[ 1 ] IP Tracker
-[ 2 ] Show Your IP
-[ 3 ] Phone Number Tracker
-[ 4 ] Username Tracker
-[ 5 ] Domain Lookup
-[ 6 ] Color Config
-[ 0 ] Exit
-```
+**Main menu:**
 
-**Ejemplo — IP Tracker:**
-```
-Enter IP target : 8.8.8.8
+<img width="655" height="306" alt="image" src="https://github.com/user-attachments/assets/546e1396-4c6e-4d3f-8db9-c8381d76dd84" />
 
-IP target        : 8.8.8.8
-Country          : United States
-City             : Mountain View
-ISP              : Google LLC
-Maps             : https://www.google.com/maps/@37.386,-122.0838,8z
-Current Time     : 2025-04-17 10:32:15 PDT
-```
+**Example — IP Tracker:**
 
-**Ejemplo — Username Tracker:**
-```
-Username : patpuralu
+<img width="646" height="545" alt="image" src="https://github.com/user-attachments/assets/0b107c17-e022-4274-9905-31142dcdf179" />
 
-Escaneando 22 plataformas...
+**Example — Username Tracker:**
 
-[✓] GitHub               (1/22)
-[✗] Instagram            (2/22)
-[✓] YouTube              (3/22)
-...
-
-[+] Encontrado en 3 plataformas
-
-  [✓] GitHub     https://www.github.com/patpuralu
-  [✓] YouTube    https://www.youtube.com/@patpuralu
-  [✓] Reddit     https://www.reddit.com/user/patpuralu
-```
+<img width="612" height="255" alt="image" src="https://github.com/user-attachments/assets/5dfd8793-574c-4816-9651-a7ec134941fb" />
 
 ---
 
-## Archivos generados
+<details>
+  <summary>Credits</summary>
 
-```
-results/
- └─ history_tracklu_2025-04-17.json    ← búsquedas de username
- └─ history_ip_2025-04-17.json         ← búsquedas de IP
- └─ history_domain_2025-04-17.json     ← búsquedas de dominio
-```
+  <p><strong>Original concept by:</strong> <a href="https://github.com/HunxByts">HUNX04</a></p>
+  <p><strong>Fork, rewrite & extended version by:</strong> patpuralu</p>
+  <p><strong>Maintainer:</strong> patpuralu</p>
 
----
+</details>
 
-## Aviso ético
-
-ShockwaveTR está diseñado para:
-
-- Auditar tu propia red e infraestructura
-- Investigación y aprendizaje en ciberseguridad
-- Localizar tus propios perfiles en redes sociales
-
-**No usar en redes, dispositivos o cuentas ajenas sin permiso explícito.**
