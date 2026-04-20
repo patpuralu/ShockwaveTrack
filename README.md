@@ -100,7 +100,7 @@ pkg install python3
 **Usage Tool**
 ```bash
 git clone https://github.com/patpuralu/ShockwaveTrack.git
-cd ShockwaveTR.py
+cd ShockwaveTR
 pip install requests phonenumbers
 o
 pip3 install -r requirements.txt
