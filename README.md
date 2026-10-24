@@ -137,6 +137,54 @@ python -m pip install netifaces pytz
 
 Run these `python -m pip` commands after activating `.venv`. Avoid using `sudo pip` or forcing installation into the system Python.
 
+### Windows 10 / 11
+
+**Requirements:**
+- Python 3.9 or newer
+- Git (optional, if you download the repository as a ZIP instead)
+
+1. Install Python from the official website: https://www.python.org/downloads/windows/
+   - During installation, enable **Add Python to PATH**.
+2. Open **PowerShell** or **Command Prompt**.
+3. Clone the repository and enter its folder:
+
+```powershell
+git clone https://github.com/patpuralu/ShockwaveTrack.git
+cd ShockwaveTrack
+```
+
+If you downloaded the project as a ZIP, extract it and open PowerShell in the extracted folder instead.
+
+Create and activate a virtual environment in PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks activation because of its execution policy, you can use Command Prompt instead:
+
+```bat
+.venv\Scripts\activate.bat
+```
+
+Install the dependencies:
+
+```powershell
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Run the program:
+
+```powershell
+python ShockwaveTR.py
+```
+
+**Compatibility note:** The updated `ShockwaveTR.py` is designed to run as a single script on Windows, Linux and macOS. Gateway detection uses PowerShell on Windows and the route table on Linux, with a `route` command fallback for macOS. Interface detection also has a fallback if `netifaces` is unavailable. Please test it on the target system, as Windows command output can vary by language and network configuration.
+
+---
+
 ### Termux
 
 Install Python and Git:
