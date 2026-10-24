@@ -83,32 +83,86 @@ Gets full information about a domain:
 ## Installation
 
 **Requirements:**
-- Python 3.9+ (Python 3.8 works with `pytz` installed)
+- Python 3.9+ (Python 3.8 may work with `pytz` installed)
+- Git
 
-**Instalation on Linux (deb)**
-```
-sudo apt-get install git
-sudo apt-get install python3
-```
+### Ubuntu / Debian
 
-**Instalation on Termux**
-```
-pkg install git
-pkg install python3
+Install Python, `pip`, and virtual-environment support using the system package manager:
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-pip python3-venv
 ```
 
-**Usage Tool**
+Clone the repository and enter its directory:
+
 ```bash
 git clone https://github.com/patpuralu/ShockwaveTrack.git
-cd ShockwaveTR
-pip install requests phonenumbers
-o
-pip3 install -r requirements.txt
+cd ShockwaveTrack
 ```
 
-**Optional** (better network interface detection):
+Create and activate a virtual environment. This is recommended on modern Ubuntu and Debian systems because it avoids the `externally-managed-environment` error:
+
 ```bash
-pip install netifaces pytz
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the dependencies. If the repository contains `requirements.txt`, use:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+If there is no `requirements.txt`, install the main dependencies directly:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install requests phonenumbers
+```
+
+Then run the tool:
+
+```bash
+python ShockwaveTR.py
+```
+
+**Optional** (for better network interface detection):
+
+```bash
+python -m pip install netifaces pytz
+```
+
+Run these `python -m pip` commands after activating `.venv`. Avoid using `sudo pip` or forcing installation into the system Python.
+
+### Termux
+
+Install Python and Git:
+
+```bash
+pkg update
+pkg install -y git python
+```
+
+Clone the repository and enter its directory:
+
+```bash
+git clone https://github.com/patpuralu/ShockwaveTrack.git
+cd ShockwaveTrack
+```
+
+Install dependencies from `requirements.txt` if it exists:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Otherwise, install the main dependencies directly:
+
+```bash
+python -m pip install requests phonenumbers
 ```
 
 ---
