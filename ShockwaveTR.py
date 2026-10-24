@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # << CODE BY patpuralu
 # Original base by HUNX04
 # Full rewrite, improvements & new modules by patpuralu
@@ -14,6 +14,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from sys import stderr
 from datetime import datetime
 import socket
+import struct
+import subprocess
+import re
 
 Bl = '\033[30m'
 Re = '\033[1;31m'
@@ -213,46 +216,165 @@ def IP_Track():
         print(f"{Wh} {label:<16} :{Gr} {value}")
 
 
-import socket
-import struct
+def _windows_ipconfig_blocks():
+    """Return (interface name, block text) pairs from Windows ipconfig output."""
+    try:
+        result = subprocess.run(
+            ["ipconfig", "/all"], capture_output=True, text=True,
+            errors="replace", timeout=8, check=False
+        )
+        output = result.stdout or ""
+        if not output:
+            return []
+    except (OSError, subprocess.SubprocessError):
+        return []
+
+    blocks = []
+    current_name = "Windows network adapter"
+    current_lines = []
+    for line in output.splitlines():
+        stripped = line.strip()
+        # English and Spanish Windows adapter headings.
+        if stripped.endswith(":") and (
+            "adapter" in stripped.lower() or "adaptador" in stripped.lower()
+        ):
+            if current_lines:
+                blocks.append((current_name, "\n".join(current_lines)))
+            current_name = stripped[:-1].strip()
+            current_lines = []
+        else:
+            current_lines.append(line)
+    if current_lines:
+        blocks.append((current_name, "\n".join(current_lines)))
+    return blocks
 
 
 def get_local_ifaces():
-    """Returns a list of (interface, local_ip, netmask). Uses netifaces if available."""
+    """Return (interface, local IPv4, netmask) tuples on Windows, Linux and macOS."""
     ifaces = []
+
+    # Preferred method: netifaces works across common operating systems when installed.
     try:
         import netifaces
         for iface in netifaces.interfaces():
             addrs = netifaces.ifaddresses(iface)
-            if netifaces.AF_INET in addrs:
-                for addr in addrs[netifaces.AF_INET]:
-                    ip = addr.get('addr', '')
-                    nm = addr.get('netmask', '')
-                    if ip and not ip.startswith('127.'):
-                        ifaces.append((iface, ip, nm))
-    except ImportError:
-        # Fallback without netifaces
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-            s.close()
+            for addr in addrs.get(netifaces.AF_INET, []):
+                ip = addr.get("addr", "")
+                netmask = addr.get("netmask", "")
+                if ip and not ip.startswith("127."):
+                    ifaces.append((iface, ip, netmask or "255.255.255.0"))
+        if ifaces:
+            return ifaces
+    except (ImportError, OSError, ValueError):
+        pass
+
+    # Windows fallback: parse ipconfig /all, including English and Spanish labels.
+    if os.name == "nt":
+        for iface, block in _windows_ipconfig_blocks():
+            ip_match = re.search(
+                r"(?:IPv4 Address|Direcci[oó]n IPv4)\s*[^:]*:\s*([0-9]{1,3}(?:\.[0-9]{1,3}){3})",
+                block, re.IGNORECASE
+            )
+            mask_match = re.search(
+                r"(?:Subnet Mask|M[aá]scara de subred)\s*:\s*([0-9]{1,3}(?:\.[0-9]{1,3}){3})",
+                block, re.IGNORECASE
+            )
+            if ip_match and not ip_match.group(1).startswith("127."):
+                ip = ip_match.group(1)
+                mask = mask_match.group(1) if mask_match else "255.255.255.0"
+                try:
+                    ipaddress.IPv4Address(ip)
+                    ipaddress.IPv4Network(f"0.0.0.0/{mask}")
+                    if not any(existing[1] == ip for existing in ifaces):
+                        ifaces.append((iface, ip, mask))
+                except ipaddress.AddressValueError:
+                    continue
+                except (ipaddress.NetmaskValueError, ValueError):
+                    continue
+        if ifaces:
+            return ifaces
+
+    # Portable fallback: determine the address used for outbound IPv4 traffic.
+    sock = None
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(("192.0.2.1", 80))  # TEST-NET address; no packet is sent by UDP connect.
+        ip = sock.getsockname()[0]
+        if ip and not ip.startswith("127."):
             ifaces.append(("default", ip, "255.255.255.0"))
-        except Exception:
-            pass
+    except OSError:
+        pass
+    finally:
+        if sock is not None:
+            sock.close()
     return ifaces
 
 
 def get_gateway():
-    """Reads the default gateway from /proc/net/route (Linux/Mac)."""
+    """Return the default IPv4 gateway on Windows, Linux or macOS."""
+    if os.name == "nt":
+        # PowerShell is more reliable than parsing localized ipconfig output.
+        commands = [
+            ["powershell", "-NoProfile", "-Command",
+             "(Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | "
+             "Sort-Object RouteMetric | Select-Object -First 1 -ExpandProperty NextHop)"],
+            ["pwsh", "-NoProfile", "-Command",
+             "(Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | "
+             "Sort-Object RouteMetric | Select-Object -First 1 -ExpandProperty NextHop)"],
+        ]
+        for command in commands:
+            try:
+                result = subprocess.run(
+                    command, capture_output=True, text=True, errors="replace",
+                    timeout=8, check=False
+                )
+                candidate = (result.stdout or "").strip().splitlines()
+                if candidate:
+                    gateway = candidate[0].strip()
+                    ipaddress.IPv4Address(gateway)
+                    return gateway
+            except (OSError, subprocess.SubprocessError, ipaddress.AddressValueError):
+                continue
+
+        # Fallback for Windows editions where PowerShell route lookup failed.
+        try:
+            result = subprocess.run(
+                ["ipconfig"], capture_output=True, text=True, errors="replace",
+                timeout=8, check=False
+            )
+            match = re.search(
+                r"(?:Default Gateway|Puerta de enlace predeterminada)\s*:\s*([0-9]{1,3}(?:\.[0-9]{1,3}){3})",
+                result.stdout or "", re.IGNORECASE
+            )
+            if match:
+                return match.group(1)
+        except (OSError, subprocess.SubprocessError):
+            pass
+        return "N/A"
+
+    # Linux route table. macOS generally falls back to the route command below.
     try:
-        with open("/proc/net/route") as f:
-            for line in f.readlines()[1:]:
+        with open("/proc/net/route", encoding="ascii") as route_file:
+            for line in route_file.readlines()[1:]:
                 parts = line.strip().split()
-                if parts[1] == '00000000':
-                    gw_hex = parts[2]
-                    return socket.inet_ntoa(struct.pack("<L", int(gw_hex, 16)))
-    except Exception:
+                if len(parts) > 2 and parts[1] == "00000000":
+                    gateway_hex = parts[2]
+                    if int(parts[3], 16) & 0x2:
+                        return socket.inet_ntoa(struct.pack("<L", int(gateway_hex, 16)))
+    except (OSError, ValueError, IndexError):
+        pass
+
+    # macOS / other Unix fallback.
+    try:
+        result = subprocess.run(
+            ["route", "-n", "get", "default"], capture_output=True,
+            text=True, errors="replace", timeout=5, check=False
+        )
+        match = re.search(r"\bgateway:\s*([0-9.]+)", result.stdout or "", re.IGNORECASE)
+        if match:
+            ipaddress.IPv4Address(match.group(1))
+            return match.group(1)
+    except (OSError, subprocess.SubprocessError, ipaddress.AddressValueError):
         pass
     return "N/A"
 
@@ -817,13 +939,13 @@ def call_option(opt):
 
 def option():
     clear()
-    stderr.writelines(f"""{Mage}
+    stderr.writelines(fr"""{Mage}
    ______ ______  _______ ___      _____ _   ______   _________  ___  _______ __
   / __/ // / __ \/ ___/ //_/ | /| / / _ | | / / __/__/_  __/ _ \/ _ |/ ___/ //_/
  _\ \/ _  / /_/ / /__/ ,<  | |/ |/ / __ | |/ / _//___// / / , _/ __ / /__/ ,<   
 /___/_//_/\____/\___/_/|_| |__/|__/_/ |_|___/___/    /_/ /_/|_/_/ |_\___/_/|_|  {Wh}
                                                                                 
-                      {Wh}[ + ]  C O D E   B Y  PATPUR  [ + ]
+                      {Wh}[ + ]  C O D E   B Y  PATPURALU  [ + ]
     """)
     stderr.writelines(f"\n\n\n{option_text()}")
 
